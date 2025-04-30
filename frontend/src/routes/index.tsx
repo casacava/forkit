@@ -1,39 +1,24 @@
 import { createFileRoute } from '@tanstack/react-router'
-import logo from '../logo.svg'
+import { useEffect, useState } from 'react'
 
 export const Route = createFileRoute('/')({
-  component: App,
-})
+  component: () => {
+    const [data, setData] = useState('loading...')
 
-function App() {
-  return (
-    <div className="text-center">
-      <header className="min-h-screen flex flex-col items-center justify-center bg-[#282c34] text-white text-[calc(10px+2vmin)]">
-        <img
-          src={logo}
-          className="h-[40vmin] pointer-events-none animate-[spin_20s_linear_infinite]"
-          alt="logo"
-        />
-        <p>
-          Edit <code>src/routes/index.tsx</code> and save to reload.
+    useEffect(() => {
+      fetch('http://127.0.0.1:8000/test-db')
+        .then((res) => res.json())
+        .then((json) => setData(JSON.stringify(json)))
+        .catch(() => setData('error fetching backend'))
+    }, [])
+
+    return (
+      <main className="p-6 text-lg">
+        <h1 className="font-bold text-2xl">🍴 Forkit Home</h1>
+        <p className="mt-4 text-slate-700">
+          Backend response: <span className="font-mono text-blue-500">{data}</span>
         </p>
-        <a
-          className="text-[#61dafb] hover:underline"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-        <a
-          className="text-[#61dafb] hover:underline"
-          href="https://tanstack.com"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn TanStack
-        </a>
-      </header>
-    </div>
-  )
-}
+      </main>
+    )
+  },
+})
