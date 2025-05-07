@@ -12,6 +12,15 @@ class PlaceInput(BaseModel):
   visited: bool = False
   favorited: bool = False
 
+@router.get("/places")
+async def get_places():
+    conn = await connect_to_db()
+    try:
+        rows = await conn.fetch("SELECT * FROM places ORDER BY created_at DESC;")
+        return [dict(row) for row in rows]
+    finally:
+        await conn.close()
+
 @router.post("/places")
 async def add_place(place: PlaceInput):
   conn = await connect_to_db()

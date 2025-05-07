@@ -17,27 +17,93 @@ export const Route = createFileRoute('/')({
     const [places, setPlaces] = useState<Array<Place>>([])
     const [loading, setLoading] = useState(true)
 
+    const [name, setName] = useState('')
+    const [address, setAddress] = useState('')
+    const [favorited, setFavorited] = useState(false)
+
+    const fetchPlaces = async () => {
+      const res = await fetch('http://127.0.0.1:8000/places')
+      const data = await res.json()
+      setPlaces(data)
+      setLoading(false)
+    }
+
     useEffect(() => {
-      fetch('http://127.0.0.1:8000/places')
-        .then((res) => res.json())
-        .then((json) => setPlaces(json))
-        .catch((err) => console.error(err))
-        .finally(() => setLoading(false))
+      fetchPlaces()
     }, [])
 
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault()
+
+      const res = await fetch('http://127.0.0.1:8000/places', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          name,
+          address,
+          tags: [],
+          visited: false,
+          favorited,
+        }),
+      })
+
+      if (res.ok) {
+        setName('')
+        setAddress('')
+        setFavorited(false)
+        fetchPlaces()
+      }
+    }
+
     return (
-      <main className="p-6 space-y-4 max-w-xl mx-auto">
-        <h1 className="text-2xl font-bold">🍴 Forkit: Places</h1>
+    <main className="p-6 space-y-6 max-w-xl mx-auto">
+      <h1 className="text-2xl font-bold">🍴 Forkit: Places</h1>
 
-        {loading && <p>Loading...</p>}
-        {!loading && places.length === 0 && <p>No places yet.</p>}
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-2 p-4 bg-white rounded shadow"
+      >
+        <h2 className="font-semibold text-lg">Add a new place</h2>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Place name"
+          required
+          className="w-full border p-2 rounded"
+        />
+        <input
+          type="text"
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+          placeholder="Address (optional)"
+          className="w-full border p-2 rounded"
+        />
+        <label className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            checked={favorited}
+            onChange={(e) => setFavorited(e.target.checked)}
+          />
+          <span>Favorited</span>
+        </label>
+        <button
+          type="submit"
+          className="bg-blue-600 text-white px-4 py-2 rounded"
+        >
+          Add Place
+        </button>
+      </form>
 
-        <div className="space-y-4">
-          {places.map((place) => (
-            <PlaceCard key={place.id} place={place} />
-          ))}
-        </div>
-      </main>
+      {loading && <p>Loading...</p>}
+      {!loading && places.length === 0 && <p>No places yet.</p>}
+
+      <div className="space-y-4">
+        {places.map((place) => (
+          <PlaceCard key={place.id} place={place} />
+        ))}
+      </div>
+    </main>
     )
   },
 })
