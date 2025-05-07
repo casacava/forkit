@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Query
 from pydantic import BaseModel
 from typing import List, Optional
 from app.core.db import connect_to_db
@@ -80,3 +80,23 @@ async def add_place(place: PlaceInput):
     return {"success": True}
   finally:
     await conn.close()
+
+@router.get("/tags")
+async def get_tags(search: Optional[str] = Query(None)):
+    conn = await connect_to_db()
+    try:
+        if search:
+            rows = await conn.fetch(
+                """
+                SELECT name FROM tags
+                WHERE name ILIKE $1
+                ORDER BY name ASC
+                LIMIT 10;
+                """,
+                f"{search}%",
+            )
+        else: 
+            rows = await conn.fetch("SELECT name FROM tags ORDER BY name ASC;")
+        return [row["name"] for row in rows]
+    finally:
+        await conn.close()

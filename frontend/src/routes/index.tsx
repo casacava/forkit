@@ -23,6 +23,7 @@ export const Route = createFileRoute('/')({
 
     const [tagInput, setTagInput] = useState('')
     const [tags, setTags] = useState<Array<string>>([])
+    const [suggestions, setSuggestions] = useState<Array<string>>([])
 
     const fetchPlaces = async () => {
       const res = await fetch('http://127.0.0.1:8000/places')
@@ -71,6 +72,24 @@ export const Route = createFileRoute('/')({
       setTags((prev) => prev.filter((tag) => tag !== tagToRemove))
     }
 
+    useEffect(() => {
+      const fetchSuggestions = async () => {
+        if (tagInput.trim() === '') {
+          setSuggestions([])
+          return
+        }
+    
+        const res = await fetch(`http://127.0.0.1:8000/tags?search=${tagInput}`)
+        if (res.ok) {
+          const data = await res.json()
+          setSuggestions(data.filter((tag: string) => !tags.includes(tag)))
+        }
+      }
+    
+      const timeout = setTimeout(fetchSuggestions, 200) // debounce
+      return () => clearTimeout(timeout)
+    }, [tagInput, tags])    
+
     return (
     <main className="p-6 space-y-6 max-w-xl mx-auto">
       <h1 className="text-2xl font-bold">🍴 Forkit: Places</h1>
@@ -106,7 +125,7 @@ export const Route = createFileRoute('/')({
 
         <div className="space-y-1">
           <label className="block font-medium">Tags</label>
-          <div className="flex gap-2">
+          <div className="relative">
             <input
               type="text"
               value={tagInput}
@@ -115,6 +134,24 @@ export const Route = createFileRoute('/')({
               placeholder="Add a tag and press Enter"
               className="border p-2 rounded w-full"
             />
+            {suggestions.length > 0 && (
+              <ul className="absolute z-10 mt-1 w-full border bg-white rounded shadow max-h-40 overflow-y-auto text-sm">
+                {suggestions.map((tag) => (
+                  <li
+                    key={tag}
+                    onClick={() => {
+                      setTags((prev) => [...prev, tag])
+                      setTagInput('')
+                      setSuggestions([])
+                    }}
+                    className="px-3 py-1 hover:bg-blue-100 cursor-pointer"
+                  >
+                    #{tag}
+                  </li>
+                ))}
+              </ul>
+            )}
+
             <button
               type="button"
               onClick={handleAddTag}
