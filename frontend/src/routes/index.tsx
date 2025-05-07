@@ -21,6 +21,9 @@ export const Route = createFileRoute('/')({
     const [address, setAddress] = useState('')
     const [favorited, setFavorited] = useState(false)
 
+    const [tagInput, setTagInput] = useState('')
+    const [tags, setTags] = useState<Array<string>>([])
+
     const fetchPlaces = async () => {
       const res = await fetch('http://127.0.0.1:8000/places')
       const data = await res.json()
@@ -41,7 +44,7 @@ export const Route = createFileRoute('/')({
         body: JSON.stringify({
           name,
           address,
-          tags: [],
+          tags,
           visited: false,
           favorited,
         }),
@@ -51,8 +54,21 @@ export const Route = createFileRoute('/')({
         setName('')
         setAddress('')
         setFavorited(false)
+        setTags([])
         fetchPlaces()
       }
+    }
+
+    const handleAddTag = () => {
+      const trimmed = tagInput.trim()
+      if (trimmed && !tags.includes(trimmed)) {
+        setTags((prev) => [...prev, trimmed])
+      }
+      setTagInput('')
+    }
+
+    const handleRemoveTag = (tagToRemove: string) => {
+      setTags((prev) => prev.filter((tag) => tag !== tagToRemove))
     }
 
     return (
@@ -87,6 +103,47 @@ export const Route = createFileRoute('/')({
           />
           <span>Favorited</span>
         </label>
+
+        <div className="space-y-1">
+          <label className="block font-medium">Tags</label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
+              placeholder="Add a tag and press Enter"
+              className="border p-2 rounded w-full"
+            />
+            <button
+              type="button"
+              onClick={handleAddTag}
+              className="px-3 py-2 bg-gray-200 rounded"
+            >
+              Add
+            </button>
+          </div>
+
+          <div className="flex flex-wrap gap-2 mt-1">
+            {tags.map((tag) => (
+              <span
+                key={tag}
+                className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-sm flex items-center gap-1"
+              >
+                #{tag}
+                <button
+                  type="button"
+                  onClick={() => handleRemoveTag(tag)}
+                  className="text-red-500 hover:text-red-700"
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        </div>
+
+
         <button
           type="submit"
           className="bg-blue-600 text-white px-4 py-2 rounded"
