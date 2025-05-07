@@ -1,6 +1,13 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { PlaceCard } from '../components/PlaceCard'
+import {
+  Command,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command"
+
 
 type Place = {
   id: string
@@ -126,42 +133,50 @@ export const Route = createFileRoute('/')({
         <div className="space-y-1">
           <label className="block font-medium">Tags</label>
           <div className="relative">
-            <input
-              type="text"
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
-              placeholder="Add a tag and press Enter"
-              className="border p-2 rounded w-full"
-            />
-            {suggestions.length > 0 && (
-              <ul className="absolute z-10 mt-1 w-full border bg-white rounded shadow max-h-40 overflow-y-auto text-sm">
-                {suggestions.map((tag) => (
-                  <li
-                    key={tag}
-                    onClick={() => {
-                      setTags((prev) => [...prev, tag])
+            <Command className="rounded-md border shadow-md w-full">
+              <CommandInput
+                value={tagInput}
+                onValueChange={setTagInput}
+                placeholder="Search or create a tag..."
+              />
+              <CommandList className="max-h-48 overflow-y-auto">
+                {suggestions.length > 0 ? (
+                  suggestions.map((tag) => (
+                    <CommandItem
+                      key={tag}
+                      value={tag}
+                      onSelect={() => {
+                        if (!tags.includes(tag)) {
+                          setTags((prev) => [...prev, tag])
+                        }
+                        setTagInput('')
+                        setSuggestions([])
+                      }}
+                    >
+                      #{tag}
+                    </CommandItem>
+                  ))
+                ) : tagInput.trim() !== '' ? (
+                  <CommandItem
+                    value={tagInput}
+                    onSelect={() => {
+                      const trimmed = tagInput.trim()
+                      if (trimmed && !tags.includes(trimmed)) {
+                        setTags((prev) => [...prev, trimmed])
+                      }
                       setTagInput('')
                       setSuggestions([])
                     }}
-                    className="px-3 py-1 hover:bg-blue-100 cursor-pointer"
                   >
-                    #{tag}
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            <button
-              type="button"
-              onClick={handleAddTag}
-              className="px-3 py-2 bg-gray-200 rounded"
-            >
-              Add
-            </button>
+                    ➕ Create “{tagInput.trim()}”
+                  </CommandItem>
+                ) : null}
+              </CommandList>
+            </Command>
           </div>
 
-          <div className="flex flex-wrap gap-2 mt-1">
+          {/* Show selected tags */}
+          <div className="flex flex-wrap gap-2 mt-2">
             {tags.map((tag) => (
               <span
                 key={tag}
@@ -170,7 +185,7 @@ export const Route = createFileRoute('/')({
                 #{tag}
                 <button
                   type="button"
-                  onClick={() => handleRemoveTag(tag)}
+                  onClick={() => setTags((prev) => prev.filter((t) => t !== tag))}
                   className="text-red-500 hover:text-red-700"
                 >
                   ×
